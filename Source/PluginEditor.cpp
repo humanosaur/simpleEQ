@@ -31,7 +31,7 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
     const auto& params = audioProcessor.getParameters();
     for ( auto param : params )
     {
-        param ->addListener(this);
+        param->addListener(this);
     }
     
     startTimer(60);
@@ -44,7 +44,7 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
     const auto& params = audioProcessor.getParameters();
     for ( auto param : params )
     {
-        param ->removeListener(this);
+        param->removeListener(this);
     }
 }
 
@@ -78,22 +78,22 @@ void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
         if( ! monoChain.isBypassed<ChainPositions::Peak>())
             mag *= peak.coefficients->getMagnitudeForFrequency(freq, sampleRate);
         
-        if( lowCut.isBypassed<0>() )
+        if( ! lowCut.isBypassed<0>() )
             mag *= lowCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if( lowCut.isBypassed<1>() )
+        if( ! lowCut.isBypassed<1>() )
             mag *= lowCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if( lowCut.isBypassed<2>() )
+        if( ! lowCut.isBypassed<2>() )
             mag *= lowCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if( lowCut.isBypassed<3>() )
+        if( ! lowCut.isBypassed<3>() )
             mag *= lowCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
         
-        if( highCut.isBypassed<0>() )
+        if( ! highCut.isBypassed<0>() )
             mag *= highCut.get<0>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if( lowCut.isBypassed<1>() )
+        if( ! highCut.isBypassed<1>() )
             mag *= highCut.get<1>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if( lowCut.isBypassed<2>() )
+        if( ! highCut.isBypassed<2>() )
             mag *= highCut.get<2>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
-        if( lowCut.isBypassed<3>() )
+        if( ! highCut.isBypassed<3>() )
             mag *= highCut.get<3>().coefficients->getMagnitudeForFrequency(freq, sampleRate);
         
         mags[i] = Decibels::gainToDecibels(mag);
@@ -157,6 +157,12 @@ void SimpleEQAudioProcessorEditor::timerCallback()
         auto chainSettings = getChainSettings(audioProcessor.apvts);
         auto peakCoefficients = makePeakFilter(chainSettings,audioProcessor.getSampleRate());
         updateCoefficients(monoChain.get<ChainPositions::Peak>().coefficients, peakCoefficients);
+        
+        auto lowCutCoefficients = makeLowCutFilter(chainSettings, audioProcessor.getSampleRate());
+        auto highCutCoefficients = makeHighCutFilter(chainSettings, audioProcessor.getSampleRate());
+        
+        updateCutFilter(monoChain.get<ChainPositions::LowCut>(), lowCutCoefficients,chainSettings.lowCutSlope);
+        updateCutFilter(monoChain.get<ChainPositions::HighCut>(), highCutCoefficients,chainSettings.highCutSlope);
         
         //signal a repaint
         repaint();
