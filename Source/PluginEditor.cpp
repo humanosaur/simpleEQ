@@ -9,6 +9,87 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+void LookAndFeel::drawRotarySlider(juce::Graphics& g,
+                                   int x,
+                                   int y,
+                                   int width,
+                                   int height,
+                                   float sliderPosProportional,
+                                   float rotaryStartAngle,
+                                   float rotaryEndAngle,
+                                   juce::Slider & slider)
+{
+    using namespace juce;
+    
+    auto bounds = Rectangle<float>(x, y, width, height);
+    
+    
+    //create and fill a circle
+    g.setColour(Colour(327.f, 62.f, 75.f, 0.3f));
+    g.fillEllipse(bounds);
+    
+    //draw a border around the circle
+    g.setColour(Colour(242u,65u,163u));
+    g.drawEllipse(bounds, 1.f);
+    
+    
+    //create a narrow rectangle to represent the indicator of the rotary dial
+    auto center = bounds.getCentre();
+    
+    Path p;
+    
+    Rectangle<float> r;
+    r.setLeft(center.getX() - 2);
+    r.setRight(center.getX() + 2);
+    r.setTop(bounds.getY());
+    r.setBottom(center.getY());
+    
+    p.addRectangle(r);
+    
+    jassert(rotaryStartAngle < rotaryEndAngle);
+    
+    //convert slider's normalized value to an angle in radians
+    auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
+    
+    //rotate it to the angle
+    p.applyTransform(AffineTransform().rotated(sliderAngRad,center.getX(), center.getY()));
+    
+    g.fillPath(p);
+}
+
+//==============================================================================
+void RotarySliderWithLabels::paint(juce::Graphics &g)
+{
+    using namespace juce;
+    
+    //set the starting point (0) at roughly 7 o'clock
+    auto startAng = degreesToRadians(180.f + 45.f);
+    
+    //set the end point (1) at roughly 5 o'clock
+    auto endAng = degreesToRadians(180.f - 45.f) + MathConstants<float>::twoPi;
+    
+    auto range = getRange();
+    
+    auto sliderBounds = getSliderBounds();
+    
+    getLookAndFeel().drawRotarySlider(g,
+                                      sliderBounds.getX(),
+                                      sliderBounds.getY(),
+                                      sliderBounds.getWidth(),
+                                      sliderBounds.getHeight(),
+                                      jmap(getValue(),range.getStart(),range.getEnd(),0.0,1.0),
+                                      startAng,
+                                      endAng,
+                                      *this);
+}
+
+juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
+{
+    return getLocalBounds();
+}
+
+//==============================================================================
+
 ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : audioProcessor(p)
 {
     const auto& params = audioProcessor.getParameters();
@@ -167,7 +248,7 @@ SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 void SimpleEQAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (juce::Colours::black);
+    g.fillAll (juce::Colours::blanchedalmond);
 }
 
 void SimpleEQAudioProcessorEditor::resized()
