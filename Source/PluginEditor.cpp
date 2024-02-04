@@ -87,10 +87,11 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
     
     auto sliderBounds = getSliderBounds();
     
-    g.setColour(Colours::red);
-    g.drawRect(getLocalBounds());
-    g.setColour(Colours::yellow);
-    g.drawRect(sliderBounds);
+// these are the bounding boxes around the sliders, leaving in for debugging
+//    g.setColour(Colours::red);
+//    g.drawRect(getLocalBounds());
+//    g.setColour(Colours::yellow);
+//    g.drawRect(sliderBounds);
     
     getLookAndFeel().drawRotarySlider(g,
                                       sliderBounds.getX(),
@@ -119,7 +120,39 @@ juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
 
 juce::String RotarySliderWithLabels::getDisplayString() const
 {
-    return juce::String(getValue());
+    if( auto* choiceParam = dynamic_cast<juce::AudioParameterChoice*>(param) )
+        return choiceParam->getCurrentChoiceName();
+    
+    juce::String str;
+    bool addK = false;
+    
+    //even though we haven't added any parameter types other than float, we'll check just in case
+    if( auto* floatParam = dynamic_cast<juce::AudioParameterFloat*>(param) )
+    {
+        float val = getValue();
+        
+        //check if over 1000 and if so, add k to kHz
+        //don't need to check which value it is since dBs will never go over 1000
+        if( val > 999.f )
+        {
+            val /= 1000.f;
+            addK = true;
+        }
+        
+        str = juce::String(val, (addK ? 2 : 0));
+    }
+    else{
+        jassertfalse; //this shouldn't happen!
+    }
+    
+    if( suffix.isNotEmpty() )
+    {
+        str << " ";
+        if( addK )
+            str << "k";
+        str << suffix;
+    }
+    return str;
 }
 
 //==============================================================================
