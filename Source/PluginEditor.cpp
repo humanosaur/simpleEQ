@@ -29,7 +29,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     g.fillEllipse(bounds);
     
     //draw a border around the circle
-    g.setColour(Colour(191u,73u,138u));
+    g.setColour(Colour(105u,60u,28u));
     g.drawEllipse(bounds, 1.f);
     
     if ( auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
@@ -107,7 +107,7 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
     auto center = sliderBounds.toFloat().getCentre();
     auto radius = sliderBounds.getWidth() * 0.5f;
     
-    g.setColour(Colour(191u,73u,138u));
+    g.setColour(Colour(105u,60u,28u));
     g.setFont(getTextHeight());
     
     auto numChoices = labels.size();
