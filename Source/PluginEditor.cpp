@@ -329,9 +329,9 @@ void ResponseCurveComponent::resized()
     //paint into the background image using the graphics content we created
     Array<float> freqs
     {
-        20, 30, 40, 50, 100,
-        200, 300, 400, 500, 1000,
-        2000, 3000, 4000, 5000, 10000,
+        20, /*30, 40, 50, */100,
+        200, /*300, 400, */500, 1000,
+        2000, /*3000, 4000,*/5000, 10000,
         20000
     };
     
