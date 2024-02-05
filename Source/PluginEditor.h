@@ -73,6 +73,8 @@ juce::Timer
     
     void paint(juce::Graphics& g) override;
     
+    void resized() override;
+    
 private:
     SimpleEQAudioProcessor& audioProcessor;
     juce::Atomic<bool> parametersChanged { false };
@@ -80,6 +82,14 @@ private:
     MonoChain monoChain;
     
     void updateChain();
+    
+    juce::Image background;
+    
+    juce::Rectangle<int> getRenderArea();
+    
+    // The analysis area is what we draw the response curve in
+    // It is slightly smaller than the render area to allow space for our labels
+    juce::Rectangle<int> getAnalysisArea();
 };
 
 //==============================================================================
