@@ -29,8 +29,8 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     g.fillEllipse(bounds);
     
     //draw a border around the circle
-    g.setColour(Colour(105u,60u,28u));
-    g.drawEllipse(bounds, 1.f);
+    g.setColour(Colours::black);
+    g.drawEllipse(bounds, 0.5f);
     
     if ( auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
     {
@@ -43,8 +43,9 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
         r.setLeft(center.getX() - 2);
         r.setRight(center.getX() + 2);
         r.setTop(bounds.getY());
-        r.setBottom(center.getY() - rswl->getTextHeight() * 1.5);
+        r.setBottom(center.getY() - rswl->getTextHeight() * 2);
         
+        g.setColour(Colours::black);
         p.addRoundedRectangle(r,2.f);
         
         jassert(rotaryStartAngle < rotaryEndAngle);
@@ -497,7 +498,9 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
         addAndMakeVisible(comp);
     }
     
-    setSize (600, 400);
+    // Make sure that before the constructor has finished, you've set the
+    // editor's size to whatever you need it to be.
+    setSize (800, 600);
 }
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
