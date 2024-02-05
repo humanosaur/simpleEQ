@@ -53,7 +53,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
         //convert slider's normalized value to an angle in radians
         auto sliderAngRad = jmap(sliderPosProportional, 0.f, 1.f, rotaryStartAngle, rotaryEndAngle);
         
-        //rotate the rectangle to the angle we jsut calculated
+        //rotate the rectangle to the angle we just calculated
         p.applyTransform(AffineTransform().rotated(sliderAngRad,center.getX(), center.getY()));
         
         g.fillPath(p);
@@ -65,8 +65,8 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
         r.setSize(strWidth + 4, rswl->getTextHeight() + 2);
         r.setCentre(bounds.getCentre());
         
-        g.setColour(Colours::blanchedalmond);
-        g.fillRect(r);
+        //g.setColour(Colours::blanchedalmond);
+        //g.fillRect(r);
         
         g.setColour(Colours::black);
         g.drawFittedText(text, r.toNearestInt(), juce::Justification::centred, 1);
@@ -353,10 +353,6 @@ void ResponseCurveComponent::resized()
     g.setColour(Colour::fromFloatRGBA(255.f,255.f,255.f,0.4f));
     for( auto x : xs )
     {
-       // auto normX = mapFromLog10(f, 20.f, 20000.f);
-        
-        //g.drawVerticalLine(getWidth() * normX, 0.f, getHeight());
-        
         g.drawVerticalLine(x, top, bottom);
     }
     
@@ -368,12 +364,9 @@ void ResponseCurveComponent::resized()
     for( auto gDb : gain )
     {
         auto y = jmap(gDb, -24.f, 24.f, float(bottom), float(top));
-        //g.drawHorizontalLine(y, 0, getWidth());
         g.setColour(gDb == 0.f ? Colour(105u,60u,28u) : Colour::fromFloatRGBA(255.f,255.f,255.f,0.4f));
         g.drawHorizontalLine(y, left, right);
     }
-    
-    //g.drawRect(getAnalysisArea());
     
     g.setColour(Colour::fromFloatRGBA(255.f,255.f,255.f,0.6f));
     const int fontHeight = 10;
@@ -411,6 +404,7 @@ void ResponseCurveComponent::resized()
     {
         auto y = jmap(gDb, -24.f, 24.f, float(bottom), float(top));
         
+        //Create label strings from our array and draw them to the right of the analysis area
         String str;
         if( gDb > 0 )
             str << "+";
@@ -420,7 +414,7 @@ void ResponseCurveComponent::resized()
         
         Rectangle<int> r;
         r.setSize(textWidth, fontHeight);
-        r. setX(getWidth() - textWidth);
+        r.setX(getWidth() - textWidth);
         r.setCentre(r.getCentreX(), y);
         
         g.setColour(gDb == 0.f ? Colours::white : Colour::fromFloatRGBA(255.f,255.f,255.f,0.6f));
@@ -433,7 +427,6 @@ juce::Rectangle<int> ResponseCurveComponent::getRenderArea()
 {
     auto bounds = getLocalBounds();
     
-    //bounds.reduce(10, 8);
     bounds.removeFromTop(12);
     bounds.removeFromBottom(2);
     bounds.removeFromLeft(20);
@@ -469,8 +462,6 @@ highCutFreqSliderAttachment(audioProcessor.apvts, "HighCut Freq", highCutFreqSli
 lowCutSlopeSliderAttachment(audioProcessor.apvts, "LowCut Slope", lowCutSlopeSlider),
 highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlopeSlider)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
     
     peakFreqSlider.labels.add({0.f, "20hZ"});
     peakFreqSlider.labels.add({1.f, "20kHz"});
