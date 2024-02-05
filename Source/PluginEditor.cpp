@@ -420,6 +420,16 @@ void ResponseCurveComponent::resized()
         g.setColour(gDb == 0.f ? Colours::white : Colour::fromFloatRGBA(255.f,255.f,255.f,0.6f));
         
         g.drawFittedText(str, r, juce::Justification::centred, 1);
+        
+        //Clear string and create a separate scale on the left for the analyzer
+        str.clear();
+        str << (gDb - 24.f);
+        
+        r.setX(1);
+        textWidth = g.getCurrentFont().getStringWidth(str);
+        r.setSize(textWidth, fontHeight);
+        g.setColour(Colour::fromFloatRGBA(255.f,255.f,255.f,0.6f));
+        g.drawFittedText(str, r, juce::Justification::centred, 1);
     }
 }
 
