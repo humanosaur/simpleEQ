@@ -335,8 +335,26 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     
-    peakFreqSlider.labels.add({0.f, "20 hZ"});
-    peakFreqSlider.labels.add({1.f, "20 kHz"});
+    peakFreqSlider.labels.add({0.f, "20hZ"});
+    peakFreqSlider.labels.add({1.f, "20kHz"});
+    
+    peakGainSlider.labels.add({0.f, "-24dB"});
+    peakGainSlider.labels.add({1.f, "24dB"});
+    
+    peakQualitySlider.labels.add({0.f, "0.1"});
+    peakQualitySlider.labels.add({1.f, "10.0"});
+    
+    lowCutFreqSlider.labels.add({0.f, "20hZ"});
+    lowCutFreqSlider.labels.add({1.f, "20kHz"});
+    
+    highCutFreqSlider.labels.add({0.f, "20hZ"});
+    highCutFreqSlider.labels.add({1.f, "20kHz"});
+    
+    lowCutSlopeSlider.labels.add({0.f, "12dB/Oct"});
+    lowCutSlopeSlider.labels.add({1.f, "48dB/Oct"});
+    
+    highCutSlopeSlider.labels.add({0.f, "12dB/Oct"});
+    highCutSlopeSlider.labels.add({1.f, "48dB/Oct"});
     
     for (auto* comp : getComps())
     {
