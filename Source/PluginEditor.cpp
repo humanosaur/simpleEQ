@@ -29,7 +29,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     g.fillEllipse(bounds);
     
     //draw a border around the circle
-    g.setColour(Colour(242u,65u,163u));
+    g.setColour(Colour(191u,73u,138u));
     g.drawEllipse(bounds, 1.f);
     
     if ( auto* rswl = dynamic_cast<RotarySliderWithLabels*>(&slider))
@@ -102,6 +102,37 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
                                       startAng,
                                       endAng,
                                       *this);
+    
+    //create a bounding box for our min/max label text, centered on a normalized point we decide
+    auto center = sliderBounds.toFloat().getCentre();
+    auto radius = sliderBounds.getWidth() * 0.5f;
+    
+    g.setColour(Colour(191u,73u,138u));
+    g.setFont(getTextHeight());
+    
+    auto numChoices = labels.size();
+    for( int i = 0; i < numChoices; ++i)
+    {
+        auto pos = labels[i].pos;
+        jassert(0.f <= pos);
+        jassert(pos <= 1.f);
+        
+        auto ang = jmap(pos, 0.f, 1.f, startAng, endAng);
+        
+        //define the point to center the bounding box on
+        
+        //this point is at the edge of the rotary slider
+        auto c = center.getPointOnCircumference(radius + getTextHeight() * 0.5f, ang);
+        
+        //this gets us a little further out and down from the edge of the rotary slider
+        Rectangle<float> r;
+        auto str = labels[i].label;
+        r.setSize(g.getCurrentFont().getStringWidth(str), getTextHeight());
+        r.setCentre(c);
+        r.setY(r.getY()+ getTextHeight());
+        
+        g.drawFittedText(str, r.toNearestInt(), juce::Justification::centred, 1);
+    }
 }
 
 juce::Rectangle<int> RotarySliderWithLabels::getSliderBounds() const
@@ -297,6 +328,9 @@ highCutSlopeSliderAttachment(audioProcessor.apvts, "HighCut Slope", highCutSlope
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
+    
+    peakFreqSlider.labels.add({0.f, "20 hZ"});
+    peakFreqSlider.labels.add({1.f, "20 kHz"});
     
     for (auto* comp : getComps())
     {

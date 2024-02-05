@@ -36,6 +36,16 @@ struct RotarySliderWithLabels : juce::Slider
         setLookAndFeel(nullptr);
     }
     
+    //this structure holds string that displays min and max values and the position to display those values
+    struct LabelPos
+    {
+        float pos;
+        juce::String label;
+    };
+    
+    //we can add all our labels in this array and then draw them with the paint function
+    juce::Array<LabelPos> labels;
+    
     void paint(juce::Graphics& g) override;
     juce::Rectangle<int> getSliderBounds() const;
     int getTextHeight() const { return 14; }
