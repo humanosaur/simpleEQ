@@ -189,13 +189,24 @@ juce::String RotarySliderWithLabels::getDisplayString() const
 
 //==============================================================================
 
-ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) : audioProcessor(p)
+ResponseCurveComponent::ResponseCurveComponent(SimpleEQAudioProcessor& p) :
+audioProcessor(p),
+leftChannelFifo(&audioProcessor.leftChannelFifo)
 {
     const auto& params = audioProcessor.getParameters();
     for ( auto param : params )
     {
         param->addListener(this);
     }
+    
+    // Initialize the FFT Data Generator with the selected order
+    // AT order 2048, we get frequency "bins" with that cover ~23hZ each
+    // Of course we can get greater resolution with higher orders, but at the expense of greater CPU usage
+    leftChannelFFTDataGenerator.changeOrder(FFTOrder::order2048);
+    
+    // Initialize the monoBuffer with the proper size
+    monoBuffer.setSize(1,leftChannelFFTDataGenerator.getFFTSize());
+    
     updateChain();
     
     startTimerHz(60);
@@ -217,14 +228,72 @@ void ResponseCurveComponent::parameterValueChanged(int parameterIndex, float new
 
 void ResponseCurveComponent::timerCallback()
 {
+    /*
+     This is where we bring together the following to draw the spectrum analyzer:
+     
+     Our SingleChannelSampleFifo (SCSF)
+     The FFT Data Generator
+     Our Path Producer
+     The GUI
+    */
+
+    juce::AudioBuffer<float> tempIncomingBuffer;
+
+    // While there are buffers to pull from SCSF, if we can pull a buffer, we send it to the FFT Data Generator
+    // We need to be very careful to keep blocks in the same order throughout
+    while( leftChannelFifo->getNumCompleteBuffersAvailable() > 0 )
+    {
+        if( leftChannelFifo->getAudioBuffer(tempIncomingBuffer) )
+        {
+            auto size = tempIncomingBuffer.getNumSamples();
+            
+            // First, shift everything in the monoBuffer forward by however many samples are in the tempIncomingBuffer
+            juce::FloatVectorOperations::copy(monoBuffer.getWritePointer(0,0),
+                                              monoBuffer.getReadPointer(0, size),
+                                              monoBuffer.getNumSamples() - size);
+            
+            // Then, copy the samples from the tempIncomingBuffer to the monoBuffer
+            juce::FloatVectorOperations::copy(monoBuffer.getWritePointer(0,monoBuffer.getNumSamples() - size),
+                                              tempIncomingBuffer.getReadPointer(0,0),
+                                              size);
+            
+            // Send monoBuffers to the FFT Data Generator
+            leftChannelFFTDataGenerator.produceFFTDataForRendering(monoBuffer, -48.f);
+        }
+    }
+    
+    // While there are FFT data buffers to pull, if we can pull a buffer, generatae a path
+    
+    const auto fftBounds = getAnalysisArea().toFloat();
+    const auto fftSize = leftChannelFFTDataGenerator.getFFTSize();
+    const auto binWidth = audioProcessor.getSampleRate() / (double)fftSize;
+    
+    while( leftChannelFFTDataGenerator.getNumAvailableFFTDataBlocks() > 0 )
+    {
+        std::vector<float> fftData;
+        if( leftChannelFFTDataGenerator.getFFTData(fftData) )
+        {
+            pathProducer.generatePath(fftData, fftBounds, fftSize, binWidth, -48.f);
+        }
+    }
+    
+    // While there are paths that can be pulled, pull as many as we can & display the most recent path
+    
+    while( pathProducer.getNumPathsAvailable() > 0 )
+    {
+        pathProducer.getPath(leftChannelFFTPath);
+    }
+    
+    // If our parameters are changed, redraw the response curve:
     if ( parametersChanged.compareAndSetBool(false, true) )
     {
         //update the monochain
         updateChain();
-        
         //signal a repaint
-        repaint();
+        // repaint(); //no longer necesary here now that we are constantly repainting
     }
+    
+    repaint();
 }
 
 void ResponseCurveComponent::updateChain()
@@ -262,8 +331,8 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     auto sampleRate = audioProcessor.getSampleRate();
     
     std::vector<double> mags;
-    
     mags.resize(w);
+    
     for (int i = 0; i < w; ++i)
     {
         double mag = 1.f;
@@ -309,10 +378,14 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
         responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
     }
     
-    g.setColour(Colours::orange);
-    g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
+    g.setColour(Colour(0xff0CF2F2));
+    g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
     
-    g.setColour(Colours::white);
+    //draw a rectangle around the render area
+    //g.setColour(Colour(0xacf241a3));
+    //g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
+    
+    g.setColour(Colour(242u, 65u, 163u));
     g.strokePath(responseCurve, PathStrokeType(2.f));
     
 }
