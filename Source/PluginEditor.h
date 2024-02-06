@@ -214,6 +214,33 @@ private:
     juce::String suffix;
 };
 
+struct PathProducer
+{
+    PathProducer(SingleChannelSampleFifo<SimpleEQAudioProcessor::BlockType>& scsf) :
+    leftChannelFifo(&scsf)
+    {
+        // Initialize the FFT Data Generator with the selected order
+        // At order 2048, we get frequency bins that cover ~23hZ each
+        // Of course we can get greater resolution with higher orders, but at the expense of greater CPU usage
+        leftChannelFFTDataGenerator.changeOrder(FFTOrder::order2048);
+        
+        // Initialize the monoBuffer with the proper size
+        monoBuffer.setSize(1,leftChannelFFTDataGenerator.getFFTSize());
+    }
+    void process(juce::Rectangle<float> fftBounds, double sampleRate);
+    juce::Path getPath() { return leftChannelFFTPath; }
+private:
+    SingleChannelSampleFifo<SimpleEQAudioProcessor::BlockType>* leftChannelFifo;
+    
+    juce::AudioBuffer<float> monoBuffer;
+    
+    FFTDataGenerator<std::vector<float>> leftChannelFFTDataGenerator;
+    
+    AnalyzerPathGenerator<juce::Path> pathProducer;
+    
+    juce::Path leftChannelFFTPath;
+};
+
 struct ResponseCurveComponent : juce::Component,
 juce::AudioProcessorParameter::Listener,
 juce::Timer
@@ -247,15 +274,7 @@ private:
     // It is slightly smaller than the render area to allow space for our labels
     juce::Rectangle<int> getAnalysisArea();
     
-    SingleChannelSampleFifo<SimpleEQAudioProcessor::BlockType>* leftChannelFifo;
-    
-    juce::AudioBuffer<float> monoBuffer;
-    
-    FFTDataGenerator<std::vector<float>> leftChannelFFTDataGenerator;
-    
-    AnalyzerPathGenerator<juce::Path> pathProducer;
-    
-    juce::Path leftChannelFFTPath;
+    PathProducer leftPathProducer, rightPathProducer;
 };
 
 //==============================================================================
@@ -298,6 +317,7 @@ private:
                 highCutSlopeSliderAttachment;
     
     std::vector<juce::Component*> getComps();
-
+    
+    //=====================================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleEQAudioProcessorEditor)
 };
