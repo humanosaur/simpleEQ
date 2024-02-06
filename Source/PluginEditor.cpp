@@ -73,6 +73,49 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     }
 }
 
+void LookAndFeel::drawToggleButton(juce::Graphics &g,
+                                   juce::ToggleButton &toggleButton,
+                                   bool shouldDrawButtonAsHighlighted,
+                                   bool shouldDrawButtonAsDown)
+{
+    using namespace juce;
+    Path powerButton;
+    
+    auto bounds = toggleButton.getLocalBounds();
+    
+    g.setColour(Colour(105u,60u,28u));
+    g.fillRect(bounds);
+    g.setColour(Colours::black);
+    g.drawRect(bounds);
+    
+    auto size = jmin(bounds.getWidth(),bounds.getHeight()) - 6; //JUCE_LIVE_CONSTANT(6);
+    auto r = bounds.withSizeKeepingCentre(size, size).toFloat();
+    
+    float ang = 24.f; //JUCE_LIVE_CONSTANT(30);
+    
+    size -= 7; //JUCE_LIVE_CONSTANT(6);
+    
+    powerButton.addCentredArc(r.getCentreX(),
+                              r.getCentreY(),
+                              size * 0.5,
+                              size * 0.5,
+                              0.f,
+                              degreesToRadians(ang),
+                              degreesToRadians(360.f - ang),
+                              true);
+    
+    powerButton.startNewSubPath(r.getCentreX(), r.getY());
+    powerButton.lineTo(r.getCentre());
+    
+    PathStrokeType pst(1.f,PathStrokeType::JointStyle::curved);
+    
+    auto color = toggleButton.getToggleState() ? Colours::dimgrey : Colour(242u, 65u, 163u);
+    
+    g.setColour(color);
+    g.strokePath(powerButton, pst);
+    g.drawEllipse(r,1.5);
+}
+
 //==============================================================================
 void RotarySliderWithLabels::paint(juce::Graphics &g)
 {
@@ -108,7 +151,7 @@ void RotarySliderWithLabels::paint(juce::Graphics &g)
     auto center = sliderBounds.toFloat().getCentre();
     auto radius = sliderBounds.getWidth() * 0.5f;
     
-    g.setColour(Colour(105u,60u,28u));
+    g.setColour(Colour(105u,60u,28u)); //kinda brown
     g.setFont(getTextHeight());
     
     auto numChoices = labels.size();
@@ -393,20 +436,20 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
     auto leftChannelFFTPath = leftPathProducer.getPath();
     //leftChannelFFTPath.applyTransform(AffineTransform().translation(getAnalysisArea().getX(), getAnalysisArea().getY()));
     
-    g.setColour(Colour(0xff0CF2F2));
+    g.setColour(Colour(0xff0CF2F2)); //hot blue
     g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
     
     auto rightChannelFFTPath = rightPathProducer.getPath();
     //rightChannelFFTPath.applyTransform(AffineTransform().translation(getAnalysisArea().getX(), getAnalysisArea().getY()));
     
-    g.setColour(Colour(0xff5CF2AC));
+    g.setColour(Colour(0xff5CF2AC)); //hot green
     g.strokePath(rightChannelFFTPath, PathStrokeType(1.f));
     
     //draw a rectangle around the render area
     //g.setColour(Colour(0xacf241a3));
     //g.drawRoundedRectangle(getRenderArea().toFloat(), 4.f, 1.f);
     
-    g.setColour(Colour(242u, 65u, 163u));
+    g.setColour(Colour(242u, 65u, 163u)); //hot pink
     g.strokePath(responseCurve, PathStrokeType(2.f));
     
 }
@@ -599,6 +642,10 @@ analyzerEnabledButtonAttachment(audioProcessor.apvts,"Analyzer Enabled", analyze
         addAndMakeVisible(comp);
     }
     
+    peakBypassButton.setLookAndFeel(&lnf);
+    lowCutBypassButton.setLookAndFeel(&lnf);
+    highCutBypassButton.setLookAndFeel(&lnf);
+    
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (800, 600);
@@ -606,7 +653,9 @@ analyzerEnabledButtonAttachment(audioProcessor.apvts,"Analyzer Enabled", analyze
 
 SimpleEQAudioProcessorEditor::~SimpleEQAudioProcessorEditor()
 {
-
+    peakBypassButton.setLookAndFeel(nullptr);
+    lowCutBypassButton.setLookAndFeel(nullptr);
+    highCutBypassButton.setLookAndFeel(nullptr);
 }
 
 //==============================================================================
