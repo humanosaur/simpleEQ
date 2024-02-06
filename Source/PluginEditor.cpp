@@ -338,11 +338,14 @@ void PathProducer::process(juce::Rectangle<float> fftBounds, double sampleRate)
 
 void ResponseCurveComponent::timerCallback()
 {
-    auto fftBounds = getAnalysisArea().toFloat();
-    auto sampleRate = audioProcessor.getSampleRate();
-    
-    leftPathProducer.process(fftBounds,sampleRate);
-    rightPathProducer.process(fftBounds, sampleRate);
+    if( shouldShowFFTAnalysis )
+    {
+        auto fftBounds = getAnalysisArea().toFloat();
+        auto sampleRate = audioProcessor.getSampleRate();
+        
+        leftPathProducer.process(fftBounds,sampleRate);
+        rightPathProducer.process(fftBounds, sampleRate);
+    }
     
     // If our parameters are changed, redraw the response curve:
     if ( parametersChanged.compareAndSetBool(false, true) )
@@ -449,17 +452,28 @@ void ResponseCurveComponent::paint (juce::Graphics& g)
         responseCurve.lineTo(responseArea.getX() + i, map(mags[i]));
     }
     
-    auto leftChannelFFTPath = leftPathProducer.getPath();
-    //leftChannelFFTPath.applyTransform(AffineTransform().translation(getAnalysisArea().getX(), getAnalysisArea().getY()));
-    
-    g.setColour(Colour(0xff0CF2F2)); //hot blue
-    g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
-    
-    auto rightChannelFFTPath = rightPathProducer.getPath();
-    //rightChannelFFTPath.applyTransform(AffineTransform().translation(getAnalysisArea().getX(), getAnalysisArea().getY()));
-    
-    g.setColour(Colour(0xff5CF2AC)); //hot green
-    g.strokePath(rightChannelFFTPath, PathStrokeType(1.f));
+    if( shouldShowFFTAnalysis )
+    {
+        auto leftChannelFFTPath = leftPathProducer.getPath();
+        
+        //This transform is supposed to help align the analyzer inside the grid,
+        //but it's not helping at the moment
+        
+        //leftChannelFFTPath.applyTransform(AffineTransform().translation(getAnalysisArea().getX(), getAnalysisArea().getY()));
+        
+        g.setColour(Colour(0xff0CF2F2)); //hot blue
+        g.strokePath(leftChannelFFTPath, PathStrokeType(1.f));
+        
+        auto rightChannelFFTPath = rightPathProducer.getPath();
+        
+        //This transform is supposed to help align the analyzer inside the grid,
+        //but it's not helping at the moment
+        
+        //rightChannelFFTPath.applyTransform(AffineTransform().translation(getAnalysisArea().getX(), getAnalysisArea().getY()));
+        
+        g.setColour(Colour(0xff5CF2AC)); //hot green
+        g.strokePath(rightChannelFFTPath, PathStrokeType(1.f));
+    }
     
     //draw a rectangle around the render area
     //g.setColour(Colour(0xacf241a3));
@@ -698,6 +712,15 @@ analyzerEnabledButtonAttachment(audioProcessor.apvts,"Analyzer Enabled", analyze
             
             comp->highCutFreqSlider.setEnabled( !bypassed);
             comp->highCutSlopeSlider.setEnabled( !bypassed);
+        }
+    };
+    
+    analyzerEnabledButton.onClick = [safePtr]()
+    {
+        if( auto* comp = safePtr.getComponent())
+        {
+            auto enabled = comp->analyzerEnabledButton.getToggleState();
+            comp->responseCurveComponent.toggleAnalysisEnablement(enabled);
         }
     };
     
